@@ -1,0 +1,10 @@
+{
+  "name": "Pietro, Samuel e Gabriel.",
+  "description": "Uma central futurística de controle ambiental com inteligência artificial, onde comandos de voz ou texto ativam portais de vídeo da floresta cibernética.",
+  "requestFramePermissions": [
+    "microphone"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
