@@ -1,6 +1,6 @@
 import React, { StrictMode, Component, ErrorInfo, ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
-import ThomasApp from './thomas/ThomasApp.tsx';
+import EzioApp from './ezio/EzioApp.tsx';
 import './index.css';
 
 interface ErrorBoundaryProps {
@@ -23,16 +23,16 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("[Projeto Thomas System Error]:", error, errorInfo);
+    console.error("[EZIO System Error]:", error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen bg-[#040b07] text-emerald-50 flex flex-col items-center justify-center p-6 text-center font-mono select-none">
-          <div className="max-w-md w-full bg-[#07150d] border border-emerald-500/40 rounded-2xl p-6 sm:p-8 flex flex-col items-center gap-4">
-            <div className="text-xs font-semibold tracking-wider uppercase text-[#39FF14]">
-              Projeto Thomas · Amazônia Viva
+        <div className="min-h-screen bg-[#030a08] text-emerald-50 flex flex-col items-center justify-center p-6 text-center font-mono select-none">
+          <div className="max-w-md w-full bg-[#06130f] border border-cyan-500/40 rounded-2xl p-6 sm:p-8 flex flex-col items-center gap-4">
+            <div className="text-xs font-semibold tracking-wider uppercase text-cyan-300">
+              EZIO · Assistente Virtual Educativo
             </div>
 
             <h1 className="text-lg sm:text-xl font-bold text-emerald-50">
@@ -40,11 +40,11 @@ class RootErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState
             </h1>
 
             <p className="text-xs text-emerald-200/80 leading-relaxed">
-              Ocorreu uma instabilidade temporária ao carregar o painel de monitoramento.
+              Ocorreu uma instabilidade temporária ao carregar o centro de monitoramento.
             </p>
 
             {this.state.error && (
-              <div className="w-full bg-[#040b07] border border-emerald-500/20 rounded-xl p-3 text-[11px] text-emerald-200 text-left overflow-x-auto max-h-32">
+              <div className="w-full bg-[#030a08] border border-emerald-500/20 rounded-xl p-3 text-[11px] text-emerald-200 text-left overflow-x-auto max-h-32">
                 {this.state.error.message || String(this.state.error)}
               </div>
             )}
@@ -70,7 +70,7 @@ if (rootElement) {
   createRoot(rootElement).render(
     <StrictMode>
       <RootErrorBoundary>
-        <ThomasApp />
+        <EzioApp />
       </RootErrorBoundary>
     </StrictMode>,
   );

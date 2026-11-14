@@ -1,0 +1,68 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+.ezio-root {
+  font-family: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  background-color: #030a08;
+  color: #ecfdf5;
+}
+
+.ezio-display {
+  font-family: 'Outfit', ui-sans-serif, system-ui, sans-serif;
+}
+
+.ezio-mono {
+  font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+  font-variant-numeric: tabular-nums;
+}
+
+.ezio-grid-bg {
+  background-image:
+    linear-gradient(to right, rgba(16, 185, 129, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(6, 182, 212, 0.045) 1px, transparent 1px);
+  background-size: 42px 42px;
+}
+
+.ezio-glow-emerald {
+  box-shadow: 0 0 0 1px rgba(57, 255, 20, 0.28), 0 0 28px rgba(34, 197, 94, 0.14);
+}
+
+.ezio-glow-cyan {
+  box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.32), 0 0 28px rgba(6, 182, 212, 0.16);
+}
+
+@keyframes ezioWavePulse {
+  0%, 100% {
+    transform: scaleY(0.35);
+    opacity: 0.65;
+  }
+  50% {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+
+.ezio-wave-bar {
+  transform-origin: center;
+  animation: ezioWavePulse 0.9s ease-in-out infinite;
+}
+
+@keyframes ezioRadarSweep {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.ezio-radar-sweep {
+  transform-origin: center;
+  animation: ezioRadarSweep 7s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ezio-wave-bar,
+  .ezio-radar-sweep {
+    animation: none;
+  }
+}

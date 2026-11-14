@@ -359,6 +359,156 @@ Diretrizes:
   }
 });
 
+// Rota unificada e isolada por grupo do Assistente Virtual EZIO (Grupo 1 e Grupo 2)
+app.post("/api/ezio/analyze", async (req, res): Promise<any> => {
+  const { input, groupId, ecosystem, triggers } = req.body;
+
+  if (!input || typeof input !== "string") {
+    return res.status(400).json({ error: "O campo 'input' é obrigatório." });
+  }
+
+  const groupTriggers = Array.isArray(triggers) ? triggers : [];
+  const allowedIds = new Set(groupTriggers.map((t: any) => String(t.id)));
+
+  const normalize = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9\s]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const normalizedInput = normalize(input);
+
+  const findLocalFallback = () =>
+    groupTriggers.find((t: any) => {
+      const phrase = normalize(String(t.phrase || ""));
+      if (!phrase) return false;
+      if (normalizedInput === phrase) return true;
+      if (phrase.length <= 6) {
+        const words = normalizedInput.split(" ");
+        return words.includes(phrase);
+      }
+      if (
+        normalizedInput.length >= 8 &&
+        (normalizedInput.includes(phrase) || phrase.includes(normalizedInput))
+      ) {
+        return true;
+      }
+      const keywords = Array.isArray(t.keywords) ? t.keywords : [];
+      return keywords.some((kw: any) => {
+        const cleanKw = normalize(String(kw || ""));
+        return cleanKw && (cleanKw.length <= 6 ? normalizedInput.split(" ").includes(cleanKw) : normalizedInput.includes(cleanKw));
+      });
+    });
+
+  const directMatch = findLocalFallback();
+  if (directMatch) {
+    return res.json({
+      matchedTriggerId: directMatch.id,
+      confidence: 1.0,
+    });
+  }
+
+  if (!ai || groupTriggers.length === 0) {
+    return res.json({
+      matchedTriggerId: null,
+      confidence: 0.0,
+    });
+  }
+
+  try {
+    const triggerList = groupTriggers
+      .map(
+        (t: any) =>
+          `ID: "${t.id}" | Frase: "${t.phrase}" | Tema: "${t.description || ""}"`
+      )
+      .join("\n");
+
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `Fala recebida do visitante: "${input}"`,
+      config: {
+        systemInstruction: `Você é o classificador de voz exclusivo do Assistente Virtual EZIO para o grupo "${groupId || "ativo"}" (${ecosystem || "Ecossistema Ambiental"}).
+Compare a fala do usuário EXCLUSIVAMENTE com os gatilhos cadastrados deste grupo abaixo:
+${triggerList}
+
+Regras:
+1. Retorne o ID exato de um gatilho acima apenas se a intenção do usuário corresponder claramente a ele (confidence >= 0.75).
+2. Nunca invente IDs e nunca associe temas de outros ecossistemas.
+3. Caso não corresponda claramente a nenhum gatilho listado, retorne matchedTriggerId como null e confidence 0.0.`,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            matchedTriggerId: { type: Type.STRING },
+            confidence: { type: Type.NUMBER },
+          },
+          required: ["matchedTriggerId", "confidence"],
+        },
+      },
+    });
+
+    const data = JSON.parse(response.text?.trim() || "{}");
+    const validId =
+      data.matchedTriggerId && allowedIds.has(String(data.matchedTriggerId))
+        ? String(data.matchedTriggerId)
+        : null;
+
+    return res.json({
+      matchedTriggerId: validId,
+      confidence: validId && typeof data.confidence === "number" ? data.confidence : 0,
+    });
+  } catch (err: any) {
+    console.error("EZIO /api/ezio/analyze error:", err);
+    const fallback = findLocalFallback();
+    return res.json({
+      matchedTriggerId: fallback ? fallback.id : null,
+      confidence: fallback ? 0.85 : 0,
+    });
+  }
+});
+
+// Rota educativa contextual do Assistente Virtual EZIO (respeitando o ecossistema do grupo selecionado)
+app.post("/api/ezio/assistant", async (req, res): Promise<any> => {
+  const { question, groupName, ecosystem, themeTitle, fallbackAnswer } = req.body;
+
+  if (!question || typeof question !== "string") {
+    return res.status(400).json({ error: "O campo 'question' é obrigatório." });
+  }
+
+  const defaultAnswer =
+    typeof fallbackAnswer === "string" && fallbackAnswer.trim()
+      ? fallbackAnswer.trim()
+      : `No projeto de ${groupName || "EZIO"} (${ecosystem || "Ecossistema"}), combinamos ciência ambiental, biodiversidade e monitoramento inteligente. Continue explorando os comandos de voz ou participe dos Quizzes dos Ecossistemas.`;
+
+  if (!ai) {
+    return res.json({ answer: defaultAnswer });
+  }
+
+  try {
+    const response = await ai.models.generateContent({
+      model: "gemini-2.5-flash",
+      contents: `Pergunta do visitante durante a apresentação do grupo "${groupName || "EZIO"}" (${ecosystem || "Ecossistema"}): "${question}"`,
+      config: {
+        systemInstruction: `Você é o Assistente Virtual Educativo EZIO, atuando exclusivamente na apresentação do grupo "${groupName || "EZIO"}" com foco em "${ecosystem || "Monitoramento Ambiental"}" (${themeTitle || "Preservação das florestas e biodiversidade"}).
+Diretrizes:
+1. Responda em português brasileiro claro, didático para nível de 9º ano e objetivo (máximo de 3 frases curtas).
+2. Mantenha o foco estrito no ecossistema da apresentação atual (${ecosystem || "Ecossistema Ambiental"}), sua fauna, preservação, sobrevivência (se aplicável) e tecnologias de monitoramento (drones, sensores IoT, satélites).
+3. Não mencione outros projetos externos nem confunda ecossistemas.`,
+        maxOutputTokens: 240,
+      },
+    });
+
+    const answer = response.text?.trim() || defaultAnswer;
+    return res.json({ answer });
+  } catch (err: any) {
+    console.error("EZIO /api/ezio/assistant error:", err);
+    return res.json({ answer: defaultAnswer });
+  }
+});
+
 // Configure Vite middleware in development, or Static Files serving in Production
 async function bootstrap() {
   const isProduction = process.env.NODE_ENV === "production";
